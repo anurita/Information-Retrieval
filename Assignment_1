@@ -1,0 +1,62 @@
+import os
+import re
+import math
+from collections import Counter
+
+# initialization
+list_of_words = []
+number_of_docs_for_word = []
+words_occur_only_once = []
+probabilities = {}
+idf = {}
+tf_idf = {}
+path = os.path.normpath("C:/Users/anu/Documents/UW/Autumn 2017/Information Retrieval/transcripts")
+total_files = len(os.listdir(path))
+
+# Read content from files and store word tokens
+for files in os.listdir(path):
+    openFile = open(os.path.join(path, files), "r")
+    content = openFile.read().lower()
+    content = re.sub('[^a-z\ \']+', " ", content)
+    list_of_words.extend(content.split())
+    openFile.close()
+
+# count total number of words in database
+words_count = Counter(list_of_words)
+total_word_tokens = sum(words_count.values())
+
+# get words that occur only once
+for word, count in words_count.items():
+    if count == 1:
+        words_occur_only_once.append(word)
+
+# take 30 most frequent words
+most_common_words = words_count.most_common(30)
+
+# computations for idf, probabilities for 30 most common words
+for word, count in most_common_words:
+    for files in os.listdir(path):
+        content = open(os.path.join(path, files)).read().lower()
+        content = re.sub('[^a-z\ \']+', " ", content)
+        if word in content:
+            number_of_docs_for_word.append(word)
+    probabilities[word] = round(count/total_word_tokens, 5)
+
+words_docs_count = Counter(number_of_docs_for_word)
+
+# calculate idf
+for word, count_of_docs in words_docs_count.items():
+    idf[word] = round(math.log(total_files/count_of_docs), 5)
+
+# calculate tf*idf
+for word, count in most_common_words:
+    tf_idf[word] = round(idf[word] * count, 5)
+
+print("1. Total number of word tokens in the database : " + str(total_word_tokens))
+print("2. Total unique words : " + str(len(words_count)))
+print("3. Number of words occur only once: " + str(len(words_occur_only_once)))
+print("4.a Term frequencies for 30 most common words: " + str(most_common_words))
+print("4.b Idf : " + str(idf))
+print("4.c  Tf * Idf: " + str(tf_idf))
+print("4.d Probabilities: " + str(probabilities))
+print("5. Avg number of words per document: " + str(round(sum(words_count.values())/total_files, 5)))
